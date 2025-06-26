@@ -1,0 +1,17 @@
+{
+  "name": "deadsimpletasks",
+  "version": "1.0.0",
+  "description": "tasks do not get any simpler",
+  "license": "MIT",
+  "author": "electr1fy0",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@tailwindcss/cli": "^4.1.11",
+    "express": "^5.1.0",
+    "tailwindcss": "^4.1.11"
+  }
+}
