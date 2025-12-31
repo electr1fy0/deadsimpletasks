@@ -20,6 +20,10 @@ const App = () => {
     ]);
   }
 
+  function removeTask(id: number) {
+    setTasks((prev) => prev.filter((task) => task.id !== id));
+  }
+
   return (
     <div className="main-app">
       <div className="card">
@@ -34,7 +38,11 @@ const App = () => {
         </form>
         <ul className="task-list">
           {tasks.map((task) => (
-            <li key={task.id} className="task-li">
+            <li
+              key={task.id}
+              className="task-li"
+              onClick={() => removeTask(task.id)}
+            >
               <div className="task-content">
                 <span className="icon">▢</span>
                 <span className="task-title">{task.title}</span>
