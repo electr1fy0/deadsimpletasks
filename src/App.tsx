@@ -25,16 +25,15 @@ const App = () => {
 
     return () => sub.subscription.unsubscribe();
   }, []);
-
-  useEffect(() => {
-    async function fetchTasks() {
-      const { data, error } = await supabase.from("tasks").select("*");
-      if (error) {
-        console.error(error.message);
-        return;
-      }
-      setTasks(data ?? []);
+  async function fetchTasks() {
+    const { data, error } = await supabase.from("tasks").select("*");
+    if (error) {
+      console.error(error.message);
+      return;
     }
+    setTasks(data ?? []);
+  }
+  useEffect(() => {
     if (!session) return;
     fetchTasks();
   }, [session]);
