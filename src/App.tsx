@@ -15,6 +15,7 @@ const App = () => {
   const [password, setPassword] = useState("");
   const [title, setTitle] = useState("");
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [signupMessage, setSignupMessage] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
@@ -46,11 +47,24 @@ const App = () => {
     if (e && "key" in e && e.key !== "Enter") return;
     if (e) e.preventDefault();
 
-    const { error } = isSignUp
-      ? await supabase.auth.signUp({ email, password })
-      : await supabase.auth.signInWithPassword({ email, password });
-
-    if (error) console.error(error.message);
+    if (isSignUp) {
+      const { error } = await supabase.auth.signUp({ email, password });
+      if (error) {
+        console.error(error.message);
+        return;
+      }
+      setSignupMessage("Check your email to verify");
+    } else {
+      setSignupMessage(null);
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) {
+        console.error(error.message);
+        return;
+      }
+    }
   }
 
   async function handleAddTask(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -104,10 +118,23 @@ const App = () => {
             onChange={(e) => setPassword(e.target.value)}
             onKeyDown={handleAuth}
           />
-          <button onClick={handleAuth}>
-            {isSignUp ? "sign up" : "log in"}
+          <button
+            onClick={handleAuth}
+            style={
+              isSignUp && signupMessage
+                ? { backgroundColor: "#3C3C3C", color: "#777777" }
+                : undefined
+            }
+          >
+            {!isSignUp && "log in"}
+            {isSignUp && signupMessage ? signupMessage : isSignUp && "sign up"}
           </button>
-          <button onClick={() => setIsSignUp(!isSignUp)}>
+          <button
+            onClick={() => {
+              setIsSignUp(!isSignUp);
+              setSignupMessage(null);
+            }}
+          >
             {isSignUp ? "log in" : "sign up"} instead
           </button>
         </div>
