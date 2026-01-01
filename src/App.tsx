@@ -73,6 +73,15 @@ const App = () => {
     fetchTasks();
   }
 
+  async function handleDelete(title: string) {
+    const { error } = await supabase.from("tasks").delete().eq("title", title);
+    if (error) {
+      console.error(error.message);
+      return;
+    }
+    fetchTasks();
+  }
+
   async function handleSignOut() {
     await supabase.auth.signOut();
   }
@@ -128,7 +137,11 @@ const App = () => {
           </div>
           <ul className="task-list">
             {tasks.map((task, idx) => (
-              <li key={`${task.title}-${idx}`} className="task-li">
+              <li
+                key={`${task.title}-${idx}`}
+                className="task-li"
+                onMouseDown={() => handleDelete(task.title)}
+              >
                 <div className="task-content">
                   <span className="icon">✓</span>
                   <span className="task-title">{task.title}</span>

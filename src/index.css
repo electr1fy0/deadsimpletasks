@@ -113,7 +113,7 @@ button:active {
 
 .task-list {
     list-style: none;
-    margin-top: 18px;
+    margin-top: 12px;
 }
 
 .task-li {
@@ -142,7 +142,7 @@ button:active {
 }
 
 .task-title {
-    font-size: 0.95rem;
+    font-size: 14px;
 }
 
 .icon {
