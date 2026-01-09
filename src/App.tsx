@@ -127,7 +127,10 @@ const App = () => {
   }
 
   async function handleSignOut() {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut({ scope: 'local' });
+    if (error) {
+      console.error("Sign out error:", error.message);
+    }
   }
 
   if (!session && view === "landing") {
