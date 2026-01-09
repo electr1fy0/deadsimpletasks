@@ -26,6 +26,11 @@ body {
     background-color: var(--bg-color);
 }
 
+::selection {
+    background-color: var(--accent-color);
+    color: var(--font-color);
+}
+
 #root {
     width: 100%;
     display: flex;
