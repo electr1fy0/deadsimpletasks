@@ -34,6 +34,171 @@ body {
     min-height: 100vh;
 }
 
+.landing-page {
+    width: 100%;
+    max-width: 480px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 48px 32px;
+}
+
+.landing-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 64px;
+}
+
+.logo-mark {
+    width: 20px;
+    height: 20px;
+    background-color: var(--font-color);
+    border-radius: 50%;
+}
+
+.header-login-btn {
+    background: transparent;
+    border: none;
+    color: var(--font-color);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 4px 0;
+    position: relative;
+}
+
+.header-login-btn::after {
+    content: "";
+    position: absolute;
+    bottom: 2px;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background-color: var(--font-color);
+    transform: scaleX(0);
+    transition: transform 0.2s ease;
+}
+
+.header-login-btn:hover::after {
+    transform: scaleX(1);
+}
+
+.back-btn {
+    background: transparent;
+    border: none;
+    color: var(--secondary-font-color);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 4px 0;
+    transition: color 0.2s ease;
+}
+
+.back-btn:hover {
+    color: var(--font-color);
+}
+
+.landing-main {
+    flex: 1;
+}
+
+.landing-hero {
+    margin-bottom: 48px;
+}
+
+.hero-title {
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--font-color);
+    margin-bottom: 6px;
+}
+
+.hero-subtitle {
+    font-size: 14px;
+    color: var(--secondary-font-color);
+    line-height: 1.6;
+}
+
+.landing-section {
+    margin-bottom: 36px;
+}
+
+.section-title {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--font-color);
+    margin-bottom: 8px;
+}
+
+.section-text {
+    font-size: 14px;
+    color: var(--secondary-font-color);
+    line-height: 1.6;
+}
+
+.inline-link {
+    background: transparent;
+    border: none;
+    color: var(--font-color);
+    font-size: inherit;
+    cursor: pointer;
+    padding: 0;
+    font-family: inherit;
+    position: relative;
+}
+
+.inline-link::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background-color: var(--font-color);
+    transform: scaleX(0);
+    transition: transform 0.2s ease;
+}
+
+.inline-link:hover::after {
+    transform: scaleX(1);
+}
+
+.landing-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 32px;
+    margin-top: auto;
+    border-top: 1px solid var(--border-color);
+}
+
+.footer-version,
+.footer-credit {
+    font-size: 13px;
+    color: var(--secondary-font-color);
+}
+
+.footer-credit a {
+    color: var(--font-color);
+    text-decoration: none;
+    position: relative;
+}
+
+.footer-credit a::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background-color: var(--font-color);
+    transform: scaleX(0);
+    transition: transform 0.2s ease;
+}
+
+.footer-credit a:hover::after {
+    transform: scaleX(1);
+}
+
 .main-app {
     margin-top: 27vh;
     display: flex;
@@ -86,6 +251,10 @@ input {
     transition: border-color 0.2s;
 }
 
+input:focus {
+    border-color: #3f3f3f;
+}
+
 input::placeholder {
     color: var(--secondary-font-color);
 }
@@ -94,7 +263,7 @@ button {
     background-color: white;
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    padding: 8px 16px;
+    padding: 10px 18px;
     font-size: 14px;
     color: #1a1a1a;
     cursor: pointer;
@@ -103,12 +272,16 @@ button {
 }
 
 button:hover {
-    translate: 0px -1px;
-    transition-duration: 140ms;
+    opacity: 0.9;
 }
 
 button:active {
     transform: scale(0.98);
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
 }
 
 .task-list {
@@ -147,7 +320,7 @@ button:active {
 
 .icon {
     border-radius: 9999px;
-    border: 1px solid var(--font-color);
+    border: 1px solid var(--secondary-font-color);
     width: 14px;
     height: 14px;
     display: flex;
@@ -157,35 +330,101 @@ button:active {
     color: transparent;
     transition: all 0.2s;
     padding: 6px;
+    cursor: pointer;
 }
 
-.task-li:hover .icon {
+.icon:hover {
     color: var(--font-color);
+    border-color: var(--font-color);
+}
+
+.task-title {
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1.5;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.15s;
+}
+
+.task-title:hover {
+    border-color: var(--border-color);
+}
+
+.task-edit-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    border-radius: 0;
+    padding: 0;
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    font-family: inherit;
+    font-weight: 400;
+    color: var(--font-color);
+    outline: none;
+    min-width: 0;
 }
 
 .auth-area {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 12px;
+    width: 100%;
 }
 
 .auth-area h1 {
     font-size: 18px;
+    font-weight: 400;
     color: var(--font-color);
-    margin-bottom: 8px;
+    margin-bottom: 4px;
+}
+
+.auth-header {
+    margin-bottom: 20px;
+}
+
+.auth-helper {
+    font-size: 14px;
+    color: var(--secondary-font-color);
 }
 
 .auth-area input {
     margin: 0;
 }
 
-.auth-area button {
+.auth-submit-btn {
     width: 100%;
     margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
 }
 
-.auth-area > button:last-child {
-    margin-top: 12px;
+.auth-submit-btn.loading {
+    background-color: #e0e0e0;
+}
+
+.btn-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #999;
+    border-top-color: #333;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.auth-switch-btn {
+    margin-top: 8px;
     background-color: transparent;
     border: none;
     color: var(--secondary-font-color);
@@ -193,7 +432,7 @@ button:active {
     font-size: 13px;
 }
 
-.auth-area > button:last-child:hover {
+.auth-switch-btn:hover {
     color: var(--font-color);
     background-color: transparent;
 }
@@ -205,11 +444,60 @@ button:active {
     background-color: transparent;
     border: none;
     color: var(--secondary-font-color);
-    padding: 8px;
-    font-size: 13px;
+    padding: 4px 0;
+    font-size: 14px;
+    cursor: pointer;
 }
 
-.signout-btn:hover {
-    color: var(--font-color);
-    background-color: transparent;
+.signout-btn::after {
+    content: "";
+    position: absolute;
+    bottom: 2px;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background-color: var(--secondary-font-color);
+    transform: scaleX(0);
+    transition: transform 0.2s ease;
+}
+
+.signout-btn:hover::after {
+    transform: scaleX(1);
+}
+
+@media (max-width: 600px) {
+    .landing-page {
+        padding: 28px 20px;
+        padding-top: 20vh;
+    }
+
+    .landing-header {
+        margin-bottom: 48px;
+    }
+
+    .landing-hero {
+        margin-bottom: 36px;
+    }
+
+    .hero-title {
+        font-size: 17px;
+    }
+
+    .landing-section {
+        margin-bottom: 28px;
+    }
+
+    .landing-footer {
+        padding-top: 24px;
+    }
+
+    .main-app {
+        margin-top: 20vh;
+        padding: 16px;
+    }
+
+    .signout-btn {
+        top: 16px;
+        right: 16px;
+    }
 }
