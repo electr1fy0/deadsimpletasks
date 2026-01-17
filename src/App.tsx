@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useId } from "react";
 import { supabase } from "./supabase";
 import type { Session } from "@supabase/supabase-js";
 
@@ -18,8 +18,17 @@ const App = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [signupMessage, setSignupMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingTasks, setIsLoadingTasks] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+
+
+
+  const emailId = useId();
+  const passwordId = useId();
+  const taskInputId = useId();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
@@ -31,12 +40,16 @@ const App = () => {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  async function fetchTasks() {
+  async function fetchTasks(showLoading = false) {
+    if (showLoading) setIsLoadingTasks(true);
+    setError(null);
     const { data, error } = await supabase
       .from("tasks")
       .select("*")
       .order("created_at", { ascending: true });
+    setIsLoadingTasks(false);
     if (error) {
+      setError("Failed to load tasks. Please try again.");
       console.error(error.message);
       return;
     }
@@ -45,24 +58,25 @@ const App = () => {
 
   useEffect(() => {
     if (!session) return;
-    fetchTasks();
+    fetchTasks(true);
   }, [session]);
 
   async function handleAuth(
     e?:
       | React.KeyboardEvent<HTMLInputElement>
-      | React.MouseEvent<HTMLButtonElement>,
+      | React.MouseEvent<HTMLButtonElement>
   ) {
     if (e && "key" in e && e.key !== "Enter") return;
     if (e) e.preventDefault();
 
     setIsLoading(true);
+    setError(null);
 
     if (view === "signup") {
       const { error } = await supabase.auth.signUp({ email, password });
       setIsLoading(false);
       if (error) {
-        console.error(error.message);
+        setError(error.message);
         return;
       }
       setSignupMessage("Check your email to verify");
@@ -74,7 +88,7 @@ const App = () => {
       });
       setIsLoading(false);
       if (error) {
-        console.error(error.message);
+        setError(error.message);
         return;
       }
     }
@@ -85,81 +99,109 @@ const App = () => {
     e.preventDefault();
     if (!session?.user.email || !title.trim()) return;
 
-    const { error } = await supabase.from("tasks").insert({
-      title,
+    const tempId = Date.now();
+    const newTask: Task = {
+      id: tempId,
+      title: title.trim(),
       created_at: new Date().toISOString(),
       email: session.user.email,
+    };
+
+    setTasks((prev) => [...prev, newTask]);
+    setTitle("");
+    setError(null);
+
+    const { error } = await supabase.from("tasks").insert({
+      title: newTask.title,
+      created_at: newTask.created_at,
+      email: newTask.email,
     });
 
     if (error) {
+      setTasks((prev) => prev.filter((t) => t.id !== tempId));
+      setError("Failed to add task. Please try again.");
       console.error(error.message);
       return;
     }
 
-    setTitle("");
     fetchTasks();
   }
 
   async function handleDelete(id: number) {
+    const previousTasks = tasks;
+    setTasks((prev) => prev.filter((t) => t.id !== id));
+    setError(null);
+
     const { error } = await supabase.from("tasks").delete().eq("id", id);
     if (error) {
+      setTasks(previousTasks);
+      setError("Failed to complete task. Please try again.");
       console.error(error.message);
-      return;
     }
-    fetchTasks();
   }
 
   async function handleUpdate(id: number, newTitle: string) {
-    if (!newTitle.trim()) {
+    const trimmedTitle = newTitle.trim();
+    const originalTask = tasks.find((t) => t.id === id);
+
+    if (!trimmedTitle || (originalTask && trimmedTitle === originalTask.title)) {
       setEditingId(null);
       return;
     }
+
+    const previousTasks = tasks;
+    setTasks((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, title: trimmedTitle } : t))
+    );
+    setEditingId(null);
+    setError(null);
+
     const { error } = await supabase
       .from("tasks")
-      .update({ title: newTitle.trim() })
+      .update({ title: trimmedTitle })
       .eq("id", id);
+
     if (error) {
+      setTasks(previousTasks);
+      setError("Failed to update task. Please try again.");
       console.error(error.message);
-      return;
     }
-    setEditingId(null);
-    fetchTasks();
   }
 
   async function handleSignOut() {
-    const { error } = await supabase.auth.signOut({ scope: 'local' });
+    const { error } = await supabase.auth.signOut({ scope: "local" });
     if (error) {
       console.error("Sign out error:", error.message);
     }
   }
 
+
   if (!session && view === "landing") {
     return (
       <div className="landing-page">
         <header className="landing-header">
-          <div className="logo-mark"></div>
-          <button
-            className="header-login-btn"
-            onClick={() => setView("login")}
-          >
+          <div className="logo-mark" aria-hidden="true"></div>
+          <button className="header-login-btn" onClick={() => setView("login")}>
             Login
           </button>
         </header>
 
         <main className="landing-main">
           <section className="landing-hero">
-            <h1 className="hero-title">
-              Dead Simple Tasks
-            </h1>
+            <h1 className="hero-title">Dead Simple Tasks</h1>
             <p className="hero-subtitle">
-              A minimalist task manager for your focused work. No clutter, no distractions, just your tasks waiting patiently.
+              A minimalist task manager for your focused work. No clutter, no
+              distractions, just your tasks waiting patiently.
             </p>
           </section>
 
           <section className="landing-section">
             <h2 className="section-title">About</h2>
             <p className="section-text">
-              In a world of overwhelming productivity apps, Dead Simple Tasks is your quiet corner. Add tasks, check them off, and move on. No algorithms deciding what matters. Just your tasks, waiting patiently until you need them again.
+              In a world of overwhelming productivity apps, Dead Simple Tasks is
+              your quiet corner. Add tasks, check them off, and move on. No
+              algorithms deciding what matters. Just your tasks, waiting
+              patiently until you need them again.
             </p>
           </section>
 
@@ -167,10 +209,7 @@ const App = () => {
             <h2 className="section-title">Join</h2>
             <p className="section-text">
               Create an account to start organizing your tasks.{" "}
-              <button
-                className="inline-link"
-                onClick={() => setView("signup")}
-              >
+              <button className="inline-link" onClick={() => setView("signup")}>
                 Sign up here
               </button>{" "}
               to get started.
@@ -181,23 +220,32 @@ const App = () => {
         <footer className="landing-footer">
           <span className="footer-version">v0.3</span>
           <span className="footer-credit">
-            Built by <a href="https://github.com/electr1fy0" target="_blank" rel="noopener noreferrer">Ayush</a>
+            Built by{" "}
+            <a
+              href="https://github.com/electr1fy0"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Ayush
+            </a>
           </span>
         </footer>
       </div>
     );
   }
 
+
   if (!session && (view === "login" || view === "signup")) {
     return (
       <div className="landing-page">
         <header className="landing-header">
-          <div className="logo-mark"></div>
+          <div className="logo-mark" aria-hidden="true"></div>
           <button
             className="header-login-btn"
             onClick={() => {
               setView(view === "login" ? "signup" : "login");
               setSignupMessage(null);
+              setError(null);
             }}
           >
             {view === "login" ? "Sign up" : "Login"}
@@ -214,19 +262,59 @@ const App = () => {
                   : "Enter your credentials to access your tasks."}
               </p>
             </div>
-            <input
-              type="email"
-              value={email}
-              placeholder="Email"
-              onChange={(e) => setEmail(e.target.value)}
-            />
-            <input
-              type="password"
-              value={password}
-              placeholder="Password"
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={handleAuth}
-            />
+
+            <div className="input-wrapper">
+              <label htmlFor={emailId} className="sr-only">
+                Email address
+              </label>
+              <input
+                id={emailId}
+                type="email"
+                name="email"
+                value={email}
+                placeholder="Email"
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+                spellCheck={false}
+                aria-describedby={error ? "auth-error" : undefined}
+              />
+            </div>
+
+            <div className="input-wrapper">
+              <label htmlFor={passwordId} className="sr-only">
+                Password
+              </label>
+              <input
+                id={passwordId}
+                type="password"
+                name="password"
+                value={password}
+                placeholder={
+                  view === "signup" ? "Create a password" : "Password"
+                }
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={handleAuth}
+                autoComplete={
+                  view === "signup" ? "new-password" : "current-password"
+                }
+                aria-describedby={error ? "auth-error" : undefined}
+              />
+            </div>
+
+            {error && (
+              <p id="auth-error" className="error-message" role="alert">
+                {error}
+              </p>
+            )}
+
+            <div aria-live="polite" aria-atomic="true">
+              {signupMessage && (
+                <p className="auth-helper" style={{ color: "#22c55e" }}>
+                  {signupMessage}
+                </p>
+              )}
+            </div>
+
             <button
               onClick={handleAuth}
               className={`auth-submit-btn ${isLoading ? "loading" : ""}`}
@@ -237,19 +325,23 @@ const App = () => {
                   : undefined
               }
             >
-              {isLoading && <span className="btn-spinner"></span>}
+              {isLoading && <span className="btn-spinner" aria-hidden="true"></span>}
               {!isLoading && view === "login" && "Sign in"}
               {!isLoading && view === "signup" && (signupMessage || "Sign up")}
             </button>
+
             <button
               onClick={() => {
                 setView(view === "signup" ? "login" : "signup");
                 setSignupMessage(null);
+                setError(null);
               }}
               className="auth-switch-btn"
               disabled={isLoading}
             >
-              {view === "signup" ? "Already have an account?" : "Don't have an account?"}
+              {view === "signup"
+                ? "Already have an account?"
+                : "Don't have an account?"}
             </button>
           </div>
         </main>
@@ -257,72 +349,123 @@ const App = () => {
     );
   }
 
+
   return (
     <>
-      <button onClick={handleSignOut} className="signout-btn">
+      <button
+        onClick={handleSignOut}
+        className="signout-btn"
+        aria-label="Sign out"
+      >
         sign out
       </button>
+
       <div className="main-app">
         <div className="heading">
           <h1>Dead Simple Tasks</h1>
           <h5>Tasks without the noise.</h5>
         </div>
+
         <div className="card">
           <div className="search-form">
+            <label htmlFor={taskInputId} className="sr-only">
+              Add a new task
+            </label>
             <input
+              id={taskInputId}
               type="text"
+              name="task"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               onKeyDown={handleAddTask}
-              placeholder="Add task..."
+              placeholder="Add task"
+              aria-describedby={error ? "task-error" : undefined}
             />
           </div>
-          <ul className="task-list">
-            {tasks.map((task) => (
-              <li
-                key={task.id}
-                className="task-li"
-              >
-                <div className="task-content">
-                  <span
-                    className="icon"
-                    onClick={() => handleDelete(task.id)}
-                  >
-                    ✓
-                  </span>
-                  {editingId === task.id ? (
-                    <input
-                      type="text"
-                      className="task-edit-input"
-                      value={editingTitle}
-                      onChange={(e) => setEditingTitle(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          handleUpdate(task.id, editingTitle);
-                        } else if (e.key === "Escape") {
-                          setEditingId(null);
-                        }
-                      }}
-                      onBlur={() => handleUpdate(task.id, editingTitle)}
-                      autoFocus
-                    />
-                  ) : (
-                    <span
-                      className="task-title"
-                      onClick={() => {
-                        setEditingId(task.id);
-                        setEditingTitle(task.title);
-                      }}
+
+          {error && (
+            <p id="task-error" className="error-message" role="alert">
+              {error}
+            </p>
+          )}
+
+          {isLoadingTasks ? (
+            <div className="task-list" aria-label="Loading tasks">
+              <div className="skeleton skeleton-task"></div>
+              <div className="skeleton skeleton-task"></div>
+              <div className="skeleton skeleton-task"></div>
+            </div>
+          ) : tasks.length === 0 ? (
+            <div className="empty-state">
+              <p>No tasks yet</p>
+              <span>Press Enter after typing to add one</span>
+            </div>
+          ) : (
+            <ul className="task-list" aria-label="Task list">
+              {tasks.map((task) => (
+                <li key={task.id} className="task-li">
+                  <div className="task-content">
+                    <button
+                      className="complete-btn"
+                      onClick={() => handleDelete(task.id)}
+                      aria-label={`Complete task: ${task.title}`}
                     >
-                      {task.title}
-                    </span>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
+                      ✓
+                    </button>
+                    {editingId === task.id ? (
+                      <>
+                        <label
+                          htmlFor={`edit-${task.id}`}
+                          className="sr-only"
+                        >
+                          Edit task
+                        </label>
+                        <input
+                          id={`edit-${task.id}`}
+                          type="text"
+                          className="task-edit-input"
+                          value={editingTitle}
+                          onChange={(e) => setEditingTitle(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              handleUpdate(task.id, editingTitle);
+                            } else if (e.key === "Escape") {
+                              setEditingId(null);
+                            }
+                          }}
+                          onBlur={() => handleUpdate(task.id, editingTitle)}
+                          autoFocus
+                        />
+                      </>
+                    ) : (
+                      <span
+                        className="task-title"
+                        onClick={() => {
+                          setEditingId(task.id);
+                          setEditingTitle(task.title);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setEditingId(task.id);
+                            setEditingTitle(task.title);
+                          }
+                        }}
+                        tabIndex={0}
+                        role="button"
+                        aria-label={`Edit task: ${task.title}`}
+                      >
+                        {task.title}
+                      </span>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
+
     </>
   );
 };
